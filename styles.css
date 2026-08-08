@@ -218,3 +218,65 @@ footer span { color:#9ba4b3; }
   font-size: 13px;
   line-height: 1.65;
 }
+
+
+
+
+
+
+
+
+
+.version-block {
+  flex: 0 0 auto;
+}
+
+.firmware-download-block {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+#downloadButton.download-compact {
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  padding: 7px 12px;
+  font-size: 11px;
+  line-height: 1.1;
+  border-radius: 7px;
+  flex: 0 0 auto;
+  gap: 5px;
+}
+
+#downloadButton.download-compact svg {
+  width: 11px;
+  height: 11px;
+}
+
+#releaseMeta {
+  margin: 0;
+  max-width: none;
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .firmware-card {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .firmware-download-block {
+    margin-left: auto;
+    align-items: flex-end;
+  }
+
+  #releaseMeta {
+    text-align: right;
+  }
+}

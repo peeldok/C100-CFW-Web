@@ -29,22 +29,24 @@
         <p class="firmware-disclaimer">This download is community-developed custom firmware, not the original 203 Systems firmware.</p>
 
         <div class="firmware-card">
-          <div>
+          <div class="version-block">
             <span class="label">LATEST VERSION</span>
             <strong id="latestVersion">—</strong>
           </div>
-          <div id="releaseMeta" class="release-meta">Checking GitHub…</div>
+
+          <div class="firmware-download-block">
+            <button id="downloadButton" class="primary-action download-compact" disabled>
+              <span>Download</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"/></svg>
+            </button>
+            <div id="releaseMeta" class="release-meta">Checking GitHub…</div>
+          </div>
         </div>
 
         <div class="release-notes-card">
           <span class="label">RELEASE NOTES</span>
           <div id="releaseNotes" class="release-notes">Checking release notes…</div>
         </div>
-
-        <button id="downloadButton" class="primary-action" disabled>
-          <span>Download</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"/></svg>
-        </button>
       </article>
 
       <article id="palettePage" class="panel page">
