@@ -294,47 +294,37 @@
 
   async function loadLatestRelease() {
     const releaseNotes = $("releaseNotes");
-    const owner = cfg.githubOwner;
-    const repo = cfg.githubRepo;
-    const configured = owner && repo && owner !== "CHANGE_ME" && repo !== "CHANGE_ME";
     const githubButton = $("githubButton");
 
-    if (!configured) {
-      $("latestVersion").textContent = "Not configured";
-      $("releaseMeta").textContent = "Set githubOwner and githubRepo in config.js.";
-      if (releaseNotes) releaseNotes.textContent = "Release notes unavailable.";
-      githubButton.addEventListener("click", () => showToast("Set GitHub repository in config.js."));
-      return;
-    }
-
-    releasePageUrl = `https://github.com/${owner}/${repo}`;
+    releasePageUrl = "https://github.com/peeldok/Mystrix-CFW";
     githubButton.addEventListener("click", () => {
-      window.open("https://github.com/peeldok/Mystrix-CFW", "_blank", "noopener");
+      window.open(releasePageUrl, "_blank", "noopener");
     });
 
     try {
-      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, {
-        headers: { "Accept": "application/vnd.github+json" }
-      });
-      if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+      const res = await fetch("./release.json", { cache: "no-store" });
+      if (!res.ok) throw new Error(`Release metadata ${res.status}`);
+
       const release = await res.json();
-      const uf2 = release.assets?.find(a => a.name.toLowerCase().endsWith(".uf2"));
-      const binary = release.assets?.find(a => /\.(bin|zip)$/i.test(a.name));
-      const asset = uf2 || binary || release.assets?.[0];
-      releaseDownloadUrl = asset?.browser_download_url || release.html_url;
-      releasePageUrl = release.html_url || releasePageUrl;
-      $("latestVersion").textContent = release.tag_name || release.name || "Latest";
-      $("releaseMeta").textContent = asset ? asset.name : "Open latest GitHub release";
+
+      releaseDownloadUrl = release.downloadUrl || release.releaseUrl || releasePageUrl;
+      releasePageUrl = release.releaseUrl || releasePageUrl;
+
+      $("latestVersion").textContent = release.version || release.tag || "Latest";
+      $("releaseMeta").textContent = release.filename || "Open latest GitHub release";
+
       if (releaseNotes) {
-        const notes = (release.body || "").trim();
+        const notes = (release.notes || "").trim();
         releaseNotes.textContent = notes || "No release notes provided.";
       }
-      $("downloadButton").disabled = false;
+
+      $("downloadButton").disabled = !releaseDownloadUrl;
     } catch (error) {
       console.error(error);
       $("latestVersion").textContent = "Unavailable";
-      $("releaseMeta").textContent = "Could not load the latest GitHub release.";
+      $("releaseMeta").textContent = "Could not load release metadata.";
       if (releaseNotes) releaseNotes.textContent = "Release notes unavailable.";
+      $("downloadButton").disabled = true;
     }
   }
 
