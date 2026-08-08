@@ -201,3 +201,20 @@ footer span { color:#9ba4b3; }
     gap: 4px;
   }
 }
+
+
+.release-notes-card {
+  margin: 14px 0 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.release-notes {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.65;
+}

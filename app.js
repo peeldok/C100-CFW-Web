@@ -293,6 +293,7 @@
   }
 
   async function loadLatestRelease() {
+    const releaseNotes = $("releaseNotes");
     const owner = cfg.githubOwner;
     const repo = cfg.githubRepo;
     const configured = owner && repo && owner !== "CHANGE_ME" && repo !== "CHANGE_ME";
@@ -301,6 +302,7 @@
     if (!configured) {
       $("latestVersion").textContent = "Not configured";
       $("releaseMeta").textContent = "Set githubOwner and githubRepo in config.js.";
+      if (releaseNotes) releaseNotes.textContent = "Release notes unavailable.";
       githubButton.addEventListener("click", () => showToast("Set GitHub repository in config.js."));
       return;
     }
@@ -323,11 +325,16 @@
       releasePageUrl = release.html_url || releasePageUrl;
       $("latestVersion").textContent = release.tag_name || release.name || "Latest";
       $("releaseMeta").textContent = asset ? asset.name : "Open latest GitHub release";
+      if (releaseNotes) {
+        const notes = (release.body || "").trim();
+        releaseNotes.textContent = notes || "No release notes provided.";
+      }
       $("downloadButton").disabled = false;
     } catch (error) {
       console.error(error);
       $("latestVersion").textContent = "Unavailable";
       $("releaseMeta").textContent = "Could not load the latest GitHub release.";
+      if (releaseNotes) releaseNotes.textContent = "Release notes unavailable.";
     }
   }
 
