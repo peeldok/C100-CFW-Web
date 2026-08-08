@@ -1,5 +1,5 @@
 window.MYSTRIX_CONFIG = {
-  githubOwner: "CHANGE_ME",
-  githubRepo: "CHANGE_ME",
-  madeWithName: "PeelDok"
+  githubOwner: "peeldok",
+  githubRepo: "Mystrix-CFW",
+  madeWithName: "peeldok"
 };
