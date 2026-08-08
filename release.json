@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
-  "tag": "v1.0.0",
+  "tag": "1.0.0",
   "filename": "Mystrix.CFW.V1.0.0.uf2",
-  "downloadUrl": "https://github.com/peeldok/Mystrix-CFW/releases/latest/download/Mystrix.CFW.V1.0.0.uf2",
-  "releaseUrl": "https://github.com/peeldok/Mystrix-CFW/releases/latest",
-  "notes": "Release metadata will be updated automatically by GitHub Actions.",
-  "publishedAt": "",
-  "updatedAt": ""
+  "downloadUrl": "https://github.com/peeldok/Mystrix-CFW/releases/download/1.0.0/Mystrix.CFW.V1.0.0.uf2",
+  "releaseUrl": "https://github.com/peeldok/Mystrix-CFW/releases/tag/1.0.0",
+  "notes": "Change Sysex buffer\r\nBefore = 320\r\nAfter = 1024",
+  "publishedAt": "2026-08-08T15:17:32Z",
+  "updatedAt": "2026-08-08T15:55:06.851Z"
 }
