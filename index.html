@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#090b10" />
+  <title>MYSTRIX CFW WebEditor</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="brand-row">
+      <img class="brand-logo" src="logo.svg" alt="Mystrix" />
+      <span>MYSTRIX CFW WebEditor</span>
+      <div id="deviceStatus" class="device-pill" data-state="searching">Searching for device…</div>
+    </header>
+
+    <div class="cfw-notice">
+      <strong>Unofficial Custom Firmware</strong>
+      <span>MYSTRIX CFW is an independent community firmware for Mystrix hardware by <a href="https://github.com/203-Systems" target="_blank" rel="noopener">203 Systems</a>. It is not an official firmware release from 203 Systems.</span>
+    </div>
+
+    <section class="stage">
+      <article id="firmwarePage" class="panel page active">
+        <div class="eyebrow">FIRMWARE</div>
+        <h1>Keep Mystrix current.</h1>
+        <p class="subtle">The latest MYSTRIX CFW release is read directly from GitHub.</p>
+        <p class="firmware-disclaimer">This download is community-developed custom firmware, not the original 203 Systems firmware.</p>
+
+        <div class="firmware-card">
+          <div>
+            <span class="label">LATEST VERSION</span>
+            <strong id="latestVersion">—</strong>
+          </div>
+          <div id="releaseMeta" class="release-meta">Checking GitHub…</div>
+        </div>
+
+        <button id="downloadButton" class="primary-action" disabled>
+          <span>Download</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"/></svg>
+        </button>
+      </article>
+
+      <article id="palettePage" class="panel page">
+        <div class="palette-header">
+          <div>
+            <div class="eyebrow">CUSTOM PALLETTE</div>
+            <h1>Velocity Palette</h1>
+          </div>
+          <div id="selectedVelocity" class="velocity-readout">Velocity 0</div>
+        </div>
+
+        <div id="paletteGrid" class="palette-grid" aria-label="128 velocity colors"></div>
+
+        <div class="palette-controls">
+          <div class="color-control">
+            <span class="label">COLOR</span>
+            <label class="color-picker-wrap">
+              <input id="colorPicker" type="color" value="#000000" />
+              <span id="colorHex">#000000</span>
+            </label>
+          </div>
+
+          <div class="side-controls">
+            <button id="importButton" class="secondary-action">Import</button>
+            <button id="exportButton" class="secondary-action">Export</button>
+            <div id="deviceOnlyControls" class="device-only-controls" hidden>
+              <label class="index-row">
+                <span>Index :</span>
+                <select id="paletteIndex">
+                  <option value="0">1</option>
+                  <option value="1">2</option>
+                  <option value="2">3</option>
+                </select>
+              </label>
+              <button id="uploadButton" class="primary-action compact">Upload</button>
+            </div>
+          </div>
+        </div>
+        <input id="importFile" type="file" accept=".json,.txt,.csv" hidden />
+        <div id="toast" class="toast" aria-live="polite"></div>
+      </article>
+    </section>
+
+    <nav class="dock" aria-label="Main navigation">
+      <button class="dock-button active" data-page="firmware" title="Firmware">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 5 14h6l-1 8 9-13h-6V2Z"/></svg>
+        <span>Firmware</span>
+      </button>
+      <button class="dock-button" data-page="palette" title="Custom Pallette">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.2a2.1 2.1 0 0 0 1.4-3.7 1.7 1.7 0 0 1 1.1-3h2.4A2.9 2.9 0 0 0 21 11.4 8.5 8.5 0 0 0 12 3Z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg>
+        <span>Custom Pallette</span>
+      </button>
+      <button id="githubButton" class="dock-button" title="GitHub">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.87c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.55 9.55 0 0 1 12 6.82a9.6 9.6 0 0 1 2.5.34c1.9-1.29 2.74-1.02 2.74-1.02.56 1.37.21 2.39.11 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+        <span>GitHub</span>
+      </button>
+    </nav>
+
+    <footer>made with <span id="madeWithName">PeelDok</span></footer>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
