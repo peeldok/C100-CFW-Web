@@ -280,3 +280,50 @@ footer span { color:#9ba4b3; }
     text-align: right;
   }
 }
+
+
+.device-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.device-slider-card {
+  display: block;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.035);
+  border-radius: 16px;
+}
+
+.device-slider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+
+.device-slider-head strong {
+  color: var(--ok);
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.device-slider-card input[type="range"] {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--ok);
+}
+
+@media (max-width: 700px) {
+  .device-settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+

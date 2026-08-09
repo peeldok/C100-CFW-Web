@@ -4,6 +4,9 @@
   const REPLY_PREFIX = [0xF0, 0x7D, 0x4D, 0x59, 0x58, 0x02];
   const PROTOCOL_VERSION = 1;
   const PALETTE_SIZE = 128;
+  const DEVICE_SETTINGS_REQUEST = [0xF0, 0x7D, 0x4D, 0x59, 0x58, 0x03, 0xF7];
+  const DEVICE_SETTINGS_REPLY = [0xF0, 0x7D, 0x4D, 0x59, 0x58, 0x04];
+  const DEVICE_SETTINGS_SET_PREFIX = [0xF0, 0x7D, 0x4D, 0x59, 0x58, 0x05];
 
   let midiAccess = null;
   let mystrixOutput = null;
@@ -11,6 +14,8 @@
   let selectedVelocity = 0;
   let releaseDownloadUrl = null;
   let releasePageUrl = null;
+  let deviceSettingsDirty = false;
+  let lastDeviceSettings = null;
   const pendingDiscoveries = new Map();
   const palette = [[0,0,0],[28,28,28],[124,124,124],[252,252,252],[252,72,72],[252,0,0],[84,0,0],[24,0,0],[252,184,104],[252,80,0],[84,28,0],[36,24,0],[252,252,72],[252,252,0],[84,84,0],[24,24,0],[132,252,72],[80,252,0],[28,84,0],[16,40,0],[72,252,72],[0,252,0],[0,84,0],[0,24,0],[72,252,92],[0,252,24],[0,84,12],[0,24,0],[72,252,132],[0,252,84],[0,84,28],[0,28,16],[72,252,180],[0,252,148],[0,84,52],[0,24,16],[72,192,252],[0,164,252],[0,64,80],[0,12,24],[72,132,252],[0,84,252],[0,28,84],[0,4,24],[72,72,252],[0,0,252],[0,0,84],[0,0,24],[132,72,252],[80,0,252],[24,0,96],[12,0,44],[252,72,252],[252,0,252],[84,0,84],[24,0,24],[252,72,132],[252,0,80],[84,0,28],[32,0,16],[252,20,0],[148,52,0],[116,80,0],[64,96,0],[0,56,0],[0,84,52],[0,80,124],[0,0,252],[0,68,76],[36,0,200],[124,124,124],[28,28,28],[252,0,0],[184,252,44],[172,232,4],[96,252,8],[12,136,0],[0,252,132],[0,164,252],[0,40,252],[60,0,252],[120,0,252],[172,24,120],[60,32,0],[252,72,0],[132,220,4],[112,252,20],[0,252,0],[56,252,36],[84,252,108],[52,252,200],[88,136,252],[48,80,192],[132,124,228],[208,28,252],[252,0,88],[252,124,0],[180,172,0],[140,252,0],[128,88,4],[56,40,0],[16,72,12],[12,76,52],[20,20,40],[20,28,88],[100,56,24],[164,0,8],[216,80,60],[212,104,24],[252,220,36],[156,220,44],[100,176,12],[28,28,44],[216,252,104],[124,252,184],[152,148,252],[140,100,252],[60,60,60],[112,112,112],[220,252,252],[156,0,0],[52,0,0],[24,204,0],[4,64,0],[180,172,0],[60,48,0],[176,92,0],[72,20,0]];
 
@@ -30,7 +35,24 @@
 
   function setDeviceControlsVisible(visible) {
     const controls = $("deviceOnlyControls");
+    const settingsButton = $("deviceSettingsButton");
+
     if (controls) controls.hidden = !visible;
+
+    if (settingsButton) {
+      settingsButton.hidden = !visible;
+      settingsButton.classList.toggle("device-connected-visible", visible);
+      settingsButton.style.display = visible ? "" : "none";
+    }
+
+    if (!visible && $("deviceSettingsPage")?.classList.contains("active")) {
+      document.querySelectorAll(".dock-button[data-page]").forEach(button => {
+        button.classList.toggle("active", button.dataset.page === "firmware");
+      });
+      $("firmwarePage").classList.add("active");
+      $("palettePage").classList.remove("active");
+      $("deviceSettingsPage").classList.remove("active");
+    }
   }
 
   function showToast(text, good = false) {
@@ -82,6 +104,106 @@
     }
   }
 
+
+  function decode7Bit16(msb, lsb) {
+    return ((msb & 0x7F) << 7) | (lsb & 0x7F);
+  }
+
+  function updateDeviceSettingsUi(minVelocity, maxVelocity, minSlope, maxSlope) {
+    minVelocity = Math.max(1, Math.min(127, minVelocity));
+    maxVelocity = Math.max(minVelocity, Math.min(127, maxVelocity));
+    minSlope = Math.max(100, Math.min(10240, minSlope));
+    maxSlope = Math.max(minSlope, Math.min(10240, maxSlope));
+
+    const minVelocitySlider = $("minVelocitySlider");
+    const maxVelocitySlider = $("maxVelocitySlider");
+    const minSlopeSlider = $("minSlopeSlider");
+    const maxSlopeSlider = $("maxSlopeSlider");
+
+    minVelocitySlider.value = minVelocity;
+    maxVelocitySlider.min = minVelocity;
+    maxVelocitySlider.value = maxVelocity;
+    minSlopeSlider.value = minSlope;
+    maxSlopeSlider.min = minSlope;
+    maxSlopeSlider.value = maxSlope;
+
+    $("minVelocityValue").textContent = minVelocity;
+    $("maxVelocityValue").textContent = maxVelocity;
+    $("minSlopeValue").textContent = minSlope;
+    $("maxSlopeValue").textContent = maxSlope;
+  }
+
+  function currentDeviceSettings() {
+    let minVelocity = Number($("minVelocitySlider").value);
+    let maxVelocity = Number($("maxVelocitySlider").value);
+    let minSlope = Number($("minSlopeSlider").value);
+    let maxSlope = Number($("maxSlopeSlider").value);
+
+    maxVelocity = Math.max(minVelocity, maxVelocity);
+    maxSlope = Math.max(minSlope, maxSlope);
+
+    updateDeviceSettingsUi(minVelocity, maxVelocity, minSlope, maxSlope);
+
+    return { minVelocity, maxVelocity, minSlope, maxSlope };
+  }
+
+  function buildDeviceSettingsMessage() {
+    const { minVelocity, maxVelocity, minSlope, maxSlope } = currentDeviceSettings();
+    return [
+      ...DEVICE_SETTINGS_SET_PREFIX,
+      minVelocity & 0x7F,
+      maxVelocity & 0x7F,
+      ...encode7Bit16(minSlope),
+      ...encode7Bit16(maxSlope),
+      0xF7
+    ];
+  }
+
+  function deviceSettingsKey(settings) {
+    return [
+      settings.minVelocity,
+      settings.maxVelocity,
+      settings.minSlope,
+      settings.maxSlope
+    ].join(":");
+  }
+
+  function markDeviceSettingsDirty() {
+    currentDeviceSettings();
+    deviceSettingsDirty = true;
+  }
+
+  function autoUploadDeviceSettings() {
+    if (!mystrixOutput || !deviceSettingsDirty) return;
+
+    const settings = currentDeviceSettings();
+    const key = deviceSettingsKey(settings);
+
+    if (key === lastDeviceSettings) {
+      deviceSettingsDirty = false;
+      return;
+    }
+
+    try {
+      mystrixOutput.send(buildDeviceSettingsMessage());
+      lastDeviceSettings = key;
+      deviceSettingsDirty = false;
+      showToast("Device settings saved.", true);
+    } catch (error) {
+      console.error(error);
+      showToast("Device settings update failed.");
+    }
+  }
+
+  function requestDeviceSettings() {
+    if (!mystrixOutput) return;
+    try {
+      mystrixOutput.send(DEVICE_SETTINGS_REQUEST);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   async function setupMidi() {
     if (!("requestMIDIAccess" in navigator)) {
       setDeviceControlsVisible(false);
@@ -114,6 +236,8 @@
     refreshInputListeners();
     mystrixOutput = null;
     mystrixInput = null;
+    deviceSettingsDirty = false;
+    lastDeviceSettings = null;
     pendingDiscoveries.clear();
     setDeviceStatus("Searching for device…");
 
@@ -144,6 +268,24 @@
 
   function handleMidiMessage(event) {
     const data = [...event.data];
+
+    if (bytesStartWith(data, DEVICE_SETTINGS_REPLY) && data[data.length - 1] === 0xF7 && data.length >= 13) {
+      const minVelocity = data[6];
+      const maxVelocity = data[7];
+      const minSlope = decode7Bit16(data[8], data[9]);
+      const maxSlope = decode7Bit16(data[10], data[11]);
+
+      updateDeviceSettingsUi(minVelocity, maxVelocity, minSlope, maxSlope);
+      lastDeviceSettings = deviceSettingsKey({
+        minVelocity,
+        maxVelocity,
+        minSlope,
+        maxSlope
+      });
+      deviceSettingsDirty = false;
+      return;
+    }
+
     if (!bytesStartWith(data, REPLY_PREFIX) || data[data.length - 1] !== 0xF7) return;
     if (data.length < 12) return;
 
@@ -160,6 +302,7 @@
     setDeviceControlsVisible(true);
     setDeviceStatus(`Mystrix ${version} connected`, "connected");
     pendingDiscoveries.clear();
+    setTimeout(requestDeviceSettings, 40);
   }
 
   function encode7Bit16(value) {
@@ -335,12 +478,19 @@
         document.querySelectorAll(".dock-button[data-page]").forEach(b => b.classList.toggle("active", b === button));
         $("firmwarePage").classList.toggle("active", page === "firmware");
         $("palettePage").classList.toggle("active", page === "palette");
+        $("deviceSettingsPage").classList.toggle("active", page === "device-settings");
+        if (page === "device-settings") requestDeviceSettings();
       });
     });
   }
 
   function init() {
     $("madeWithName").textContent = cfg.madeWithName || "PeelDok";
+    const deviceSettingsButton = $("deviceSettingsButton");
+    if (deviceSettingsButton) {
+      deviceSettingsButton.hidden = true;
+      deviceSettingsButton.style.display = "none";
+    }
     setDeviceControlsVisible(false);
     renderPalette();
     selectVelocity(0);
@@ -358,6 +508,13 @@
     $("downloadButton").addEventListener("click", () => {
       if (releaseDownloadUrl) window.location.href = releaseDownloadUrl;
     });
+
+    ["minVelocitySlider", "maxVelocitySlider", "minSlopeSlider", "maxSlopeSlider"].forEach(id => {
+      $(id).addEventListener("input", markDeviceSettingsDirty);
+    });
+
+    updateDeviceSettingsUi(1, 127, 100, 10240);
+    setInterval(autoUploadDeviceSettings, 5000);
 
     loadLatestRelease();
     setupMidi();
