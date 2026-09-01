@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#090b10" />
+  <title>C100 · Windows USB driver setup</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="stylesheet" href="styles.css?v=3" />
+  <style>
+    .doc { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 64px; line-height: 1.62; }
+    .doc h1 { font-size: clamp(24px, 4vw, 34px); margin: 0 0 6px; }
+    .doc h2 { margin: 34px 0 10px; font-size: 19px; }
+    .doc p, .doc li { color: #d7dce5; }
+    .doc code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 6px; }
+    .doc a { color: #9db2ff; }
+    .doc .note { background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; margin: 16px 0; }
+    .doc ol { padding-left: 22px; }
+    .doc ol li { margin: 7px 0; }
+    .doc table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+    .doc th, .doc td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+    .doc .back { display: inline-block; margin-bottom: 20px; color: var(--muted); text-decoration: none; }
+    .kbd { position: relative; display: grid; grid-template-columns: repeat(10, 1fr);
+           gap: 6px; width: min(100%, 420px); margin: 28px 0 8px; padding: 14px;
+           background: #0c0e13; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; }
+    .kbd .k { aspect-ratio: 1; border: 1.5px solid rgba(255,255,255,.28); border-radius: 3px; }
+    .kbd .hi { background: #f4f7fb; border-color: #f4f7fb; box-shadow: 0 0 10px 2px rgba(244,247,251,.5); }
+    .kbd::after { content: ""; position: absolute; inset: 0; border-radius: 14px;
+                  pointer-events: none;
+                  background: linear-gradient(to bottom, transparent 28%, #0c0e13 104%); opacity: .6; }
+    /* USB cable at top-centre — orientation reference: cable up = this is the top */
+    .kbd .cable { position: absolute; left: 50%; top: -18px; transform: translateX(-50%);
+                  width: 13px; height: 18px; }
+    .kbd .cable::before { content: ""; position: absolute; left: 50%; top: 0;
+                  transform: translateX(-50%); width: 4px; height: 12px;
+                  background: rgba(255,255,255,.32); border-radius: 2px; }
+    .kbd .cable::after { content: ""; position: absolute; left: 50%; bottom: 0;
+                  transform: translateX(-50%); width: 13px; height: 7px;
+                  background: rgba(255,255,255,.45); border-radius: 3px 3px 0 0; }
+    .kbd-cap { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+  </style>
+</head>
+<body>
+  <main class="doc">
+    <a class="back" href="index.html">&larr; C100 WebEditor</a>
+    <h1>Windows: one-time USB driver setup</h1>
+    <p><strong>macOS and Linux: skip this — nothing to install.</strong></p>
+
+    <p>The first time you flash a C100 from Windows, the browser cannot reach the
+    board's ROM bootloader until Windows has a driver bound to it. You assign the
+    generic <strong>WinUSB</strong> driver once, with a small free tool called
+    <strong>Zadig</strong>. Every flash after that just works.</p>
+
+    <h2>1. Get Zadig</h2>
+    <p><a href="https://github.com/pbatard/libwdi/releases/download/v1.5.1/zadig-2.9.exe">Download</a>
+    from <a href="https://zadig.akeo.ie" target="_blank" rel="noopener">zadig.akeo.ie</a>
+    — a single executable, no installation.</p>
+
+    <h2>2. Enter the C100 into bootloader mode</h2>
+    <p id="dfuStep">Hold the <strong>top-left corner key</strong> while plugging in
+    the USB cable. Windows detects a new device — it appears as
+    <em>DFU in FS Mode</em> (USB ID <code>2E3C:DF11</code>) with no driver yet.</p>
+    <div id="kbd" class="kbd" aria-hidden="true"></div>
+    <p class="kbd-cap">USB cable at the top — hold the highlighted top-left key.</p>
+
+    <h2>3. Run Zadig</h2>
+    <ol>
+      <li>Start <code>zadig-2.9.exe</code> and accept the admin (UAC) prompt.</li>
+      <li>In the dropdown, select <strong>DFU in FS Mode</strong>. If it is not
+        listed, tick <strong>Options &rarr; List All Devices</strong>.</li>
+      <li>Check the <strong>USB ID</strong> field reads <strong>2E3C / DF11</strong>
+        and <strong>Driver</strong> shows <strong>(NONE)</strong> — do not pick a
+        mouse, hub, or your other keyboard.</li>
+      <li>In the driver box right of the green arrow, choose <strong>WinUSB</strong>.</li>
+      <li>Click <strong>Install Driver</strong>. It takes ~10–30&nbsp;seconds.</li>
+      <li>When it reports success, close Zadig.</li>
+    </ol>
+
+    <h2>4. Flash</h2>
+    <p>Unplug and re-plug the C100, open the WebEditor, and click <strong>UPDATE</strong>
+    on the Firmware page. Pick the C100 bootloader in the browser's device dialog.</p>
+
+    <h2>Undo</h2>
+    <p>Device Manager &rarr; right-click the entry &rarr; <strong>Uninstall device</strong>
+    &rarr; tick <em>Delete the driver software for this device</em>. Or run Zadig again.</p>
+
+    <h2>Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>2E3C DF11</code> not in the list</td><td>Tick <strong>Options &rarr; List All Devices</strong>; make sure the board is really in bootloader mode.</td></tr>
+      <tr><td>Install fails / "cannot find the file specified"</td><td>Re-run Zadig as administrator, try <strong>Replace Driver</strong> again.</td></tr>
+      <tr><td>WebEditor still can't find the device</td><td>Unplug/replug, fully close and reopen the browser.</td></tr>
+      <tr><td>Changed the driver on the wrong device</td><td>Device Manager &rarr; that device &rarr; Uninstall device (delete driver) &rarr; unplug/replug.</td></tr>
+    </table>
+
+  </main>
+  <script>
+    (function () {
+      var kbd = document.getElementById("kbd");
+      if (!kbd) return;
+      var cable = document.createElement("span");
+      cable.className = "cable";
+      kbd.appendChild(cable);
+      for (var r = 0; r < 5; r++) {
+        for (var c = 0; c < 10; c++) {
+          var k = document.createElement("span");
+          k.className = "k" + (r === 0 && c === 0 ? " hi" : "");
+          // fade toward the bottom, like the board photo
+          k.style.opacity = (1 - r * 0.17).toFixed(2);
+          kbd.appendChild(k);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
