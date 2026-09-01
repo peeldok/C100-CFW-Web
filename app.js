@@ -386,35 +386,65 @@
     }
   }
 
+  // When the browser's WebUSB chooser is needed, it must be opened from a *direct*
+  // click (transient user activation). Rebooting into the bootloader takes seconds
+  // of awaits, which spends that activation — so we split the flow: phase 1 gets
+  // the board into DFU, phase 2 (the next UPDATE click) opens the chooser.
+  let awaitingDevicePick = false;
+
+  async function beginFlash(device) {
+    setFlashing(true);
+    try {
+      const image = await loadImage();
+      await flash(device, image);            // flash() owns its own error handling + cleanup
+    } catch (e) {
+      console.error(e);
+      fwStatus(`Update failed: ${e.message}`, "error", 0);
+      setFlashing(false);
+    }
+  }
+
   async function updateFirmware() {
     if (flashing) return;
     if (!("usb" in navigator)) return fwStatus("WebUSB needs Chrome/Edge over HTTPS.", "error", 0);
+
+    // Phase 2 — this click exists only to open the WebUSB chooser.
+    if (awaitingDevicePick) {
+      awaitingDevicePick = false;
+      let device;
+      try {
+        device = await navigator.usb.requestDevice({ filters: dfuFilter() });
+      } catch (e) {
+        return fwStatus(e && e.name === "NotFoundError"
+          ? "No bootloader selected — click UPDATE to try again."
+          : `Could not open the device: ${e.message}`, "error", 0);
+      }
+      return beginFlash(device);
+    }
+
+    // Windows: WinUSB must be bound to the bootloader first.
     if (isWindows() && !driverConfirmed) {
       const ok = await askDriverInstalled();
       if (!ok) { window.location.href = "zadig.html"; return; }
       driverConfirmed = true;
     }
-    try {
-      setFlashing(true);
-      const image = await loadImage();
 
-      let device = await findDfu();
-      if (!device && connected && devOut) {
-        fwStatus("Entering bootloader…", "working", 4);
-        devOut.send(msg(CMD.ENTER_BOOTLOADER));
-        for (let i = 0; i < 24 && !device; i++) { await sleep(250); device = await findDfu(); }
-      }
-      if (!device) {
-        fwStatus("Select the C100 DFU device in the USB dialog…", "working", 4);
-        setFlashing(false);
-        device = await navigator.usb.requestDevice({ filters: dfuFilter() });
-      }
-      await flash(device, image);
-    } catch (e) {
-      setFlashing(false);
-      if (e?.name === "NotFoundError") fwStatus("Device selection cancelled.", "error", 0);
-      else { console.error(e); fwStatus(`Could not start update: ${e.message}`, "error", 0); }
+    // Phase 1 — do we already have the bootloader, or can we summon it?
+    let device = await findDfu();
+    let rebooted = false;
+    if (!device && connected && devOut) {
+      fwStatus("Rebooting the C100 into its bootloader…", "working", 4);
+      try { devOut.send(msg(CMD.ENTER_BOOTLOADER)); rebooted = true; } catch (_) {}
+      for (let i = 0; i < 16 && !device; i++) { await sleep(250); device = await findDfu(); }
     }
+    if (device) return beginFlash(device);
+
+    // Otherwise the chooser is required; ask for a fresh click.
+    awaitingDevicePick = true;
+    fwStatus(rebooted
+      ? 'C100 is entering its bootloader — click UPDATE again, then pick "DFU in FS Mode".'
+      : 'Put the C100 in bootloader mode (hold the top-left key while plugging in USB), then click UPDATE again and pick "DFU in FS Mode".',
+      "working", 0);
   }
 
   // ---- ui plumbing ---------------------------------------------------

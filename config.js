@@ -1,5 +1,5 @@
 window.C100_CONFIG = {
-  githubUrl: "https://github.com/peeldok/",
+  githubUrl: "https://github.com/peeldok/C100",
   madeWithName: "PeelDok",
 
   // "Custom Firmware": this project's grid firmware, bundled with the site (raw .bin @ 0x08000000).
